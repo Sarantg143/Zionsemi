@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import "./CourseDetails.css";
 import tick from "../Assets/SVG/tick.svg";
 import { useNavigate, useParams } from "react-router-dom";
@@ -7,10 +6,11 @@ import LoadingPage from "../LoadingPage/LoadingPage";
 import Accordion from "react-bootstrap/Accordion";
 import ErrorDataFetchOverlay from "../Error/ErrorDataFetchOverlay";
 import ProgressBar from "../ProgressBar/ProgressBar";
+import { getDegreeById } from "../../Admin/firebase/degreeApi"; // Import the API to fetch degree data
 
 const CourseDetails = () => {
   const navigate = useNavigate();
-  const { courseId } = useParams();
+  const { courseId } = useParams(); // This is passed in the URL
   const [userId, setUserId] = useState("");
   const [courseData, setCourseData] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -34,68 +34,68 @@ const CourseDetails = () => {
 
   useEffect(() => {
     const userdata = JSON.parse(localStorage.getItem("userdata"));
-    if(userdata.id){
-      setUserId(userdata.id)
+    if (userdata?.id) {
+      setUserId(userdata.id);
+    } else {
+      navigate("../../");
     }
-    else{
-      navigate("../../")
-    }
+
     const fetchData = async () => {
       try {
-        const coursedataraw = JSON.parse(localStorage.getItem("degree_courses"))[courseId];
-        const lessons = [];
-        Object.values(coursedataraw.lessons).forEach((lesson, index) => {
-          const chapters = [];
-          const questions = [];
-          let test = {}
-          Object.values(lesson.chapters).forEach((chapter, index) => {
-            chapters[index] = {
-              "title":chapter.name,
-              "type":chapter.type,
-              "link":chapter.link,
-              "duration":chapter.duration,
+        // Fetch degree data from Firestore
+        const degreeData = await getDegreeById(userdata.applyingFor);
+        
+        if (degreeData) {
+          const courseDataFromDegree = degreeData.courses.find(course => course.course_id === courseId);
+          if (!courseDataFromDegree) {
+            throw new Error("Course not found");
           }
-          })
-          if(Object.keys(lesson.test).length>0){
-            test = {
-              "test_id":lesson.test.test_id,
-              "timelimit":lesson.test.timelimit,
-              "title":lesson.test.title,
-              "questions":questions
+
+          // Process course lessons and tests
+          const lessons = courseDataFromDegree.lessons.map((lesson, index) => {
+            const chapters = lesson.chapters.map((chapter) => ({
+              title: chapter.title,
+              type: chapter.type,
+              link: chapter.link,
+              duration: chapter.duration,
+            }));
+
+            let test = {};
+            if (lesson.test) {
+              const questions = lesson.test.questions.map((question) => ({
+                question: question.question,
+                answer: question.correctAnswer,
+                options: question.options,
+              }));
+              test = {
+                test_id: lesson.test.test_id,
+                timelimit: lesson.test.timeLimit,
+                title: lesson.test.title,
+                questions: questions,
+              };
             }
-          Object.values(lesson.test.questions).forEach((question, index) => {
-            const options = [];
-            question.options.forEach((option) => {
-              options.push(option);
-            })
-            questions[index] = {
-              "question":question.question,
-              "answer":question.correctAnswer,
-              "options":options
-          }
-          })
+
+            return {
+              title: lesson.title,
+              description: lesson.description,
+              chapter: chapters,
+              test: test,
+            };
+          });
+
+          const coursedata = {
+            _id: courseDataFromDegree.course_id,
+            title: courseDataFromDegree.title,
+            description: courseDataFromDegree.description || "Description needed for course",
+            lessons: lessons,
+            videoUrl: courseDataFromDegree.videoUrl || "",
+            image: courseDataFromDegree.image || "imagenotxt.png",
+          };
+          setCourseData(coursedata);
+          setIsLoading(false);
+        } else {
+          throw new Error("Degree not found");
         }
-          lessons[index] = {
-            "testId":null,
-            "title":lesson.name,
-            "description":lesson.description,
-            "chapter": chapters,
-            "test":test
-        }
-        });
-        const coursedata = {
-          "_id":"",
-          "title":coursedataraw.name,
-          "overviewPoints":[],
-          "description":"desc needed for course",
-          "image":"imagenotxt.png",
-          "lessons":lessons,
-          "header":"header needed",
-          "videoUrl":"https://vimeo.com/3539841"
-          }
-        setCourseData(coursedata);
-        // console.log(response.data.course);
-        setIsLoading(false);
       } catch (err) {
         console.error("Error fetching course details:", err);
         setIsLoading(false);
@@ -104,95 +104,7 @@ const CourseDetails = () => {
     };
 
     fetchData();
-  }, []);
-
-  useEffect(() => {
-    const fetchCompletedVideos = async () => {
-      // if (!userId) return;
-
-      // try {
-
-      //   const response = await axios.get(
-      //     `https://csuite-production.up.railway.app/api/completevideo/${userId}/${courseId}`
-      //   );
-
-      //   const data = response.data.completedUserData;
-      //   // console.log("Fetched data:", data[0].completedVideos);
-      //   setCompletedUserData(data[0].completedVideos);
-
-      //   if (data.length > 0) {
-      //     const firstItem = data[0];
-      //     const completedTitles = firstItem.completedVideos;
-
-      //     // Initialize completedExercises
-      //     const completedSet = new Set(
-      //       firstItem.completedVideos.flatMap((videoTitle) =>
-      //         courseData.lessons.flatMap((lesson, lessonIndex) =>
-      //           lesson.chapter.flatMap((video, videoIndex) =>
-      //             video.title === videoTitle
-      //               ? [`${lessonIndex}-${videoIndex}`]
-      //               : []
-      //           )
-      //         )
-      //       )
-      //     );
-      //     setCompletedExercises(completedSet);
-      //     setFetchedID(firstItem._id);
-      //     setWatchedVideoTitles(completedTitles);
-
-      //     // console.log("Completed video titles:", completedTitles);
-      //   } else {
-      //     console.log("No completed videos found.");
-      //     setCompletedUserData([]);
-      //     setWatchedVideoTitles([]);
-      //     setCompletedExercises(new Set());
-      //   }
-      // } catch (err) {
-      //   if (err.response) {
-      //     if (err.response.status === 404) {
-      //       // const message =
-      //       //   err.response.data.message ||
-      //       //   "No completed videos found. This might be normal.";
-      //       // console.log(message);
-      //       setCompletedUserData([]);
-      //       setWatchedVideoTitles([]);
-      //       setCompletedExercises(new Set());
-
-      //       try {
-
-      //         await axios.post(
-      //           `https://csuite-production.up.railway.app/api/completevideo/`,
-      //           {
-      //             userId,
-      //             courseId,
-      //             completedVideos: [],
-      //           }
-      //         );
-      //         // alert("posting in effect");
-      //         // console.log("New entry created with empty completed videos.");
-      //       } catch (postErr) {
-      //         console.error(
-      //           "Error creating new completed video entry:",
-      //           postErr
-      //         );
-      //       }
-      //     } else {
-      //       console.error(
-      //         "Error fetching completed videos:",
-      //         err.response.data.message || err.message || err
-      //       );
-      //     }
-      //   } else {
-      //     console.error("Error fetching completed videos:", err.message || err);
-      //   }
-      // }
-      setCompletedUserData([]);
-          setWatchedVideoTitles([]);
-          setCompletedExercises(new Set());
-    };
-
-    fetchCompletedVideos();
-  }, [count]);
+  }, [courseId, navigate]);
 
   const handleLessonClick = (index) => {
     setActiveLesson(index === activeLesson ? null : index);
@@ -218,67 +130,35 @@ const CourseDetails = () => {
     if (!duration || duration === "0") {
       return "3mins+";
     }
-    const hours = Math.floor(duration / 3600);
-    const minutes = Math.floor((duration % 3600) / 60);
+    const minutes = Math.floor(duration / 60);
     const seconds = duration % 60;
 
     return `${parseInt(minutes, 10)}m ${parseInt(seconds, 10)}s`;
   }
 
-  // currentcourse kkaaga ethu
-  const handleCurrentContent = async (data, lessonIndex, excerciseIndex) => {
-    const exerciseKey = `${lessonIndex}-${excerciseIndex}`;
-    // Update completedExercises set
+  const handleCurrentContent = (data, lessonIndex, exerciseIndex) => {
+    const exerciseKey = `${lessonIndex}-${exerciseIndex}`;
     setCompletedExercises((prev) => {
       const updatedSet = new Set(prev);
       updatedSet.add(exerciseKey);
-      // console.log("Updated completedExercises:", Array.from(updatedSet));
       return updatedSet;
     });
 
-    // Update watchedVideoTitles array
     setWatchedVideoTitles((prevTitles) => {
       const updatedTitles = new Set(prevTitles);
       updatedTitles.add(data.title);
-      // console.log("Updated watchedVideoTitles:", Array.from(updatedTitles));
       return Array.from(updatedTitles);
     });
 
-    // Modify data and set current course data
     const modifiedData = {
       ...data,
-      excerciseNo: excerciseIndex + 1,
+      exerciseNo: exerciseIndex + 1,
       lessonNo: lessonIndex + 1,
-      type: data.type,
-      link: data.link,
-      duration: data.duration,
     };
     setCurrentCourseData(modifiedData);
-
-    // Update lesson and video indices
     setCurrentLessonIndex(lessonIndex);
-    setCurrentVideoIndex(excerciseIndex);
+    setCurrentVideoIndex(exerciseIndex);
     setActiveAccordion(lessonIndex);
-
-    // console.log("Updating completed videos with data:", {
-    //   lesson: data.title,
-    // });
-
-    // try {
-    //   const videoAlreadyCompleted = completedUserData.includes(data.title);
-
-    //   if (!videoAlreadyCompleted) {
-    //     const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
-
-    //     // Video already completed, update if necessary
-    //     await axios.put(
-    //       `https://csuite-production.up.railway.app/api/completevideo/${fetchedID}/updatelesson`,
-    //       { lesson: data.title }
-    //     );
-    //   }
-    // } catch (err) {
-    //   console.error("Error handling current content:", err);
-    // }
   };
 
   const handleNext = async () => {
@@ -313,26 +193,24 @@ const CourseDetails = () => {
   const renderContent = (link, typeManual) => {
     if (typeManual === "video") {
       return (
-          <iframe
-            title={currentCourseData.title || "Video Title"}
-            className="embed-responsive-item"
-            sandbox="allow-forms allow-scripts allow-same-origin allow-presentation"
-            src={`https://player.vimeo.com/video/${link.split("/").pop()}`}
-            style={{ width: "100%", height: "100%"}}
-            allow="autoplay; encrypted-media"
-          ></iframe>
+        <iframe
+          title={currentCourseData.title || "Video Title"}
+          className="embed-responsive-item"
+          sandbox="allow-forms allow-scripts allow-same-origin allow-presentation"
+          src={`https://player.vimeo.com/video/${link.split("/").pop()}`}
+          style={{ width: "100%", height: "100%" }}
+          allow="autoplay; encrypted-media"
+        ></iframe>
       );
     } else if (typeManual === "ppt") {
-      // const fileId = link.split("/d/")[1].split("/")[0];
-      // const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
       return (
-          <iframe
-            title="PPT"
-            className="embed-responsive-item"
-            src={link}
-            style={{ width: "100%", height: "100%" }}
-            allow="autoplay; encrypted-media"
-          ></iframe>
+        <iframe
+          title="PPT"
+          className="embed-responsive-item"
+          src={link}
+          style={{ width: "100%", height: "100%" }}
+          allow="autoplay; encrypted-media"
+        ></iframe>
       );
     }
   };
@@ -356,11 +234,7 @@ const CourseDetails = () => {
   };
 
   if (isLoading) {
-    return (
-      <div>
-        <LoadingPage />
-      </div>
-    );
+    return <LoadingPage />;
   }
 
   if (fetchError) {
@@ -383,17 +257,15 @@ const CourseDetails = () => {
         </div>
         <div className="courseContentProgressBar">
           <ProgressBar progress={calculateProgress()} />
-        </div>{" "}
+        </div>
       </div>
-      <div style={{display:"flex",justifyContent:"space-evenly"}} className="row secondRow">
-        <div style={{width:"70%"}} className="col-md-8 pdy">
+      <div style={{ display: "flex", justifyContent: "space-evenly" }} className="row secondRow">
+        <div style={{ width: "70%" }} className="col-md-8 pdy">
           <div className="videoBox">
-            <div style={{height:"70vh"}} className="embed-responsive embed-responsive-16by9">
+            <div style={{ height: "70vh" }} className="embed-responsive embed-responsive-16by9">
               {courseData?.lessons.length > 0 &&
                 renderContent(
-                  !currentCourseData.link
-                    ? courseData.videoUrl
-                    : currentCourseData.link,
+                  !currentCourseData.link ? courseData.videoUrl : currentCourseData.link,
                   !currentCourseData.link ? "video" : currentCourseData.type
                 )}
             </div>
@@ -409,13 +281,11 @@ const CourseDetails = () => {
                       {!currentCourseData.title
                         ? courseData.lessons[0].title
                         : currentCourseData.title}
-                      {/* {courseData.lessons[0].title} */}
                     </h3>
                     <p className="lessonDescriptionBoxDescription">
                       {!currentCourseData.notes
                         ? courseData.lessons[0].description
                         : currentCourseData.notes}
-                      {/* {courseData.lessons[0].description} */}
                     </p>
                   </div>
                 )}
@@ -423,7 +293,7 @@ const CourseDetails = () => {
             </div>
           </div>
         </div>
-        <div style={{width:"25%"}} className="col-md-4 CCaccordianBox">
+        <div style={{ width: "25%" }} className="col-md-4 CCaccordianBox">
           <Accordion activeKey={activeAccordion} onSelect={handleLessonClick}>
             {courseData?.lessons &&
               courseData.lessons?.map((lesson, index) => {
@@ -438,11 +308,7 @@ const CourseDetails = () => {
                       className={
                         !currentCourseData.title
                           ? ""
-                          : `${
-                              currentCourseData.lessonNo === index + 1
-                                ? "accr-btn-active"
-                                : ""
-                            }`
+                          : `${currentCourseData.lessonNo === index + 1 ? "accr-btn-active" : ""}`
                       }
                     >
                       <div className="CClesson-meta">
@@ -452,18 +318,14 @@ const CourseDetails = () => {
                           </div>
 
                           {lessonCompleted && (
-                            <img
-                              className="content-watched"
-                              src={tick}
-                              alt="watched"
-                            />
+                            <img className="content-watched" src={tick} alt="watched" />
                           )}
                         </div>
-                        <div style={{display:"flex", width:"100%",justifyContent:"space-between"}}>
-                        <span className="lesson-duration">
-                          {calculateTotalDuration(lesson?.chapter)}{" "}
-                        </span>
-                        <span className="lesson-duration">{lesson.chapter?.length}</span>
+                        <div style={{ display: "flex", width: "100%", justifyContent: "space-between" }}>
+                          <span className="lesson-duration">
+                            {calculateTotalDuration(lesson?.chapter)}{" "}
+                          </span>
+                          <span className="lesson-duration">{lesson.chapter?.length}</span>
                         </div>
                       </div>
                     </Accordion.Header>
@@ -474,65 +336,46 @@ const CourseDetails = () => {
                             <li
                               key={vidIndex}
                               className={`list-group-item 
-             ${
-               currentCourseData.title === video.title
-                 ? "list-group-item-active"
-                 : completedExercises.has(`${index}-${vidIndex}`)
-                 ? "completedLesson"
-                 : ""
-             }`}
-                              onClick={() =>
-                                handleCurrentContent(video, index, vidIndex)
-                              }
+                              ${
+                                currentCourseData.title === video.title
+                                  ? "list-group-item-active"
+                                  : completedExercises.has(`${index}-${vidIndex}`)
+                                  ? "completedLesson"
+                                  : ""
+                              }`}
+                              onClick={() => handleCurrentContent(video, index, vidIndex)}
                             >
                               <span className="video-number">
-                                {/* <a href={video.link}>
-                                  {`${index + 1}.${vidIndex + 1}`}&nbsp;
-                                  {video.title}
-                                </a> */}
                                 <div>
                                   {`${index + 1}.${vidIndex + 1}`}&nbsp;
                                   {video.title}
                                 </div>
 
-                                {completedExercises.has(
-                                  `${index}-${vidIndex}`
-                                ) && (
-                                  <img
-                                    className="content-watched"
-                                    src={tick}
-                                    alt="watched"
-                                  />
+                                {completedExercises.has(`${index}-${vidIndex}`) && (
+                                  <img className="content-watched" src={tick} alt="watched" />
                                 )}
                               </span>
                               {video?.type === "video" ? (
                                 <span className="lesson-duration">
-                                  Duration :{" "}
-                                  {convertToReadableDuration(video.duration)}
+                                  Duration : {convertToReadableDuration(video.duration)}
                                 </span>
                               ) : (
-                                <span className="lesson-duration">
-                                  Type : {video?.type}
-                                </span>
+                                <span className="lesson-duration">Type : {video?.type}</span>
                               )}
                             </li>
                           ))}
                         </ul>
-                        {Object.values(lesson.test).length>0 && (
+                        {Object.values(lesson.test).length > 0 && (
                           <div className="testButtonBox">
                             <div className="testButtonInr">
-                              <div className="testButtonTxt">
-                                Take a Test to Confirm Your Understanding
-                              </div>
+                              <div className="testButtonTxt">Take a Test to Confirm Your Understanding</div>
 
                               <button
                                 className="testButton"
-                                onClick={() =>
-                                  {
-                                    localStorage.setItem("testdata", lesson.test)
-                                    navigate(`/home/tests/${lesson.test.test_id}/user/${userId}`)
-                                  }
-                                }
+                                onClick={() => {
+                                  localStorage.setItem("testdata", JSON.stringify(lesson.test));
+                                  navigate(`/home/tests/${lesson.test.test_id}/user/${userId}`);
+                                }}
                               >
                                 Take Test
                               </button>

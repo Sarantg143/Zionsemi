@@ -52,6 +52,7 @@ export const addDegree = async (degreeData) => {
       const courseLessons = await Promise.all(course.lessons.map(async (lesson) => {
         const lessonChapters = await Promise.all(lesson.chapters.map(async (chapter) => {
           return {
+            chapter_id: uuidv4(),
             title: chapter.title,
             type: chapter.type,
             link: chapter.link,
@@ -190,6 +191,7 @@ export const addChapterToLesson = async (degreeId, courseId, lessonId, chapterDa
         const updatedLessons = await Promise.all(course.lessons.map(async (lesson) => {
           if (lesson.lesson_id === lessonId) {
             const newChapter = {
+              chapter_id: uuidv4(),
               title: chapterData.title,
               type: chapterData.type,
               link: chapterData.file ? await uploadFile(chapterData.file, chapterData.type) : '',
@@ -447,7 +449,9 @@ export const getDegreeById = async (degreeId) => {
     const degreeRef = doc(db, 'degrees', degreeId);
     const degreeSnapshot = await getDoc(degreeRef);
     if (degreeSnapshot.exists()) {
-      return degreeSnapshot.data();
+      const data = degreeSnapshot.data();
+      console.log('Degree data retrieved:', data);
+      return data;
     } else {
       console.log('No such degree found!');
       return null;
