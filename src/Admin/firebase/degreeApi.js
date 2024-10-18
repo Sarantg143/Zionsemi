@@ -353,7 +353,6 @@ export const deleteTest = async (degreeId, courseId, chapterId, lessonId, testId
   }
 };
 
-// CRUD Operations for Degrees, Courses, Lessons, and Chapters
 
 // Get all degrees
 export const getAllDegrees = async () => {
@@ -411,7 +410,46 @@ export const getCourseById = async (degreeId, courseId) => {
     return null;
   }
 };
+// Edit Course
+export const editCourse = async (degreeId, courseId, updatedCourseData) => {
+  try {
+    const degreeRef = doc(db, 'degrees', degreeId);
+    const degreeSnapshot = await getDoc(degreeRef);
+    const degreeData = degreeSnapshot.data();
 
+    const updatedCourses = degreeData.courses.map((course) =>
+      course.course_id === courseId
+        ? { ...course, ...updatedCourseData, updatedAt: Date.now() }
+        : course
+    );
+
+    await updateDoc(degreeRef, { courses: updatedCourses });
+    console.log('Course updated successfully!');
+    return true;
+  } catch (error) {
+    console.error('Error updating course:', error);
+    return false;
+  }
+};
+
+// Delete Course
+export const deleteCourse = async (degreeId, courseId) => {
+  try {
+    const degreeRef = doc(db, 'degrees', degreeId);
+    const degreeSnapshot = await getDoc(degreeRef);
+    const degreeData = degreeSnapshot.data();
+
+    const updatedCourses = degreeData.courses.filter((course) => course.course_id !== courseId);
+
+    await updateDoc(degreeRef, { courses: updatedCourses });
+    console.log('Course deleted successfully!');
+    return true;
+  } catch (error) {
+    console.error('Error deleting course:', error);
+    return false;
+  }
+};
+// Edit Degree
 export const editDegree = async (degreeId, updatedDegreeData) => {
   try {
     const degreeRef = doc(db, 'degrees', degreeId);
