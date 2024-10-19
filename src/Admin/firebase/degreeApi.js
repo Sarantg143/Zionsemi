@@ -82,10 +82,17 @@ export const addDegree = async (degreeData) => {
 };
 
 // Add a course to an existing degree
+
 export const addCourseToDegree = async (degreeId, courseData) => {
   try {
     const degreeRef = doc(db, 'degrees', degreeId);
     const degreeSnapshot = await getDoc(degreeRef);
+
+    if (!degreeSnapshot.exists()) {
+      console.error('No such degree found with id:', degreeId);
+      return false;
+    }
+
     const degreeData = degreeSnapshot.data();
 
     const newCourse = {
@@ -94,7 +101,7 @@ export const addCourseToDegree = async (degreeId, courseData) => {
       description: courseData.description,
       image: courseData.image || '',
       chapters: [], // Placeholder for chapters
-      finalTest: courseData.finalTest ? createTestObject(courseData.finalTest) : null,
+      finalTest: courseData.finalTest ? createTestObject(courseData.finalTest) : null, // Final test for the course
     };
 
     const updatedCourses = [...degreeData.courses, newCourse]; // Add the new course
@@ -107,6 +114,8 @@ export const addCourseToDegree = async (degreeId, courseData) => {
     return false;
   }
 };
+
+
 
 // Add a chapter to a course
 export const addChapterToCourse = async (degreeId, courseId, chapterData) => {
@@ -415,6 +424,12 @@ export const editCourse = async (degreeId, courseId, updatedCourseData) => {
   try {
     const degreeRef = doc(db, 'degrees', degreeId);
     const degreeSnapshot = await getDoc(degreeRef);
+
+    if (!degreeSnapshot.exists()) {
+      console.error('No such degree found with id:', degreeId);
+      return false;
+    }
+
     const degreeData = degreeSnapshot.data();
 
     const updatedCourses = degreeData.courses.map((course) =>
@@ -437,6 +452,12 @@ export const deleteCourse = async (degreeId, courseId) => {
   try {
     const degreeRef = doc(db, 'degrees', degreeId);
     const degreeSnapshot = await getDoc(degreeRef);
+
+    if (!degreeSnapshot.exists()) {
+      console.error('No such degree found with id:', degreeId);
+      return false;
+    }
+
     const degreeData = degreeSnapshot.data();
 
     const updatedCourses = degreeData.courses.filter((course) => course.course_id !== courseId);
@@ -453,7 +474,13 @@ export const deleteCourse = async (degreeId, courseId) => {
 export const editDegree = async (degreeId, updatedDegreeData) => {
   try {
     const degreeRef = doc(db, 'degrees', degreeId);
-    
+    const degreeSnapshot = await getDoc(degreeRef);
+
+    if (!degreeSnapshot.exists()) {
+      console.error('No such degree found with id:', degreeId);
+      return false;
+    }
+
     const updatedData = {
       degree_title: updatedDegreeData.degree_title,
       description: updatedDegreeData.description,
