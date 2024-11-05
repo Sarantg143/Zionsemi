@@ -9,7 +9,7 @@ import Upload from "../../assets/Images/upload.png";
 import { uploadFile } from '../../firebase/lessonApi';
 import LessonTest from './LessonTest';
 import { toast } from 'react-toastify';
-import { addLessonToCourse, deleteLesson, editLesson } from '../../firebase/degreeApi';
+import { addLessonToChapter, deleteLesson, editLesson } from '../../firebase/degreeApi';
 
 
 const initialState = {
@@ -76,7 +76,7 @@ const LessonPopUp = ({ addLesson, cancel, editData, removeThisLesson, degreeId, 
       addLesson(currentLesson);
       if (res) cancel()
     } else if (currentLesson.name && degreeId && courseId) {
-      const res = await toast.promise(addLessonToCourse(degreeId, courseId, currentLesson), {
+      const res = await toast.promise(addLessonToChapter(degreeId, courseId, currentLesson), {
         pending: "adding new lesson...",
         success: "lesson added successfully",
         error: "An error occurred while adding new lesson"
