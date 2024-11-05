@@ -9,7 +9,7 @@ import { collection, addDoc, getDocs, updateDoc, doc, deleteDoc } from 'firebase
 import { getAllDegrees } from '../Admin/firebase/degreeApi';
 import { addUser } from '../Admin/firebase/userApi';
 import courseContent from '../Components/Assets/Data/couseContent.json'
-
+  
 const options = {
   maritalStatus: [
     { value: 'single', label: 'Single' },
