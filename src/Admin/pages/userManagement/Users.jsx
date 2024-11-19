@@ -1,6 +1,6 @@
 import React from "react";
-import searchIcon from "../../Assets/Images/search.png";
-import addIcon from "../../Assets/Images/plus.png";
+import searchIcon from "../../assets/Images/search.png";
+import addIcon from "../../assets/Images/plus.png";
 import UsersList from "./UsersList";
 
 const Users = ({ openNewUser, openEditUser }) => {

@@ -1,7 +1,7 @@
 import React from "react";
-import potrate from "../../Assets/Images/potrate-1.jpg";
-import Trash from "../../Assets/Images/trash.png";
-import Edit from "../../Assets/Images/edit.png";
+import potrate from "../../assets/Images/potrate-1.jpg";
+import Trash from "../../assets/Images/trash.png";
+import Edit from "../../assets/Images/edit.png";
 import { deleteUser } from "../../firebase/userApi";
 
 const EditUser = ({ open, openEdit, data }) => {

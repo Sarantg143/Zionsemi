@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import moreIcon from "../../Assets/Images/more.png";
+import moreIcon from "../../assets/Images/more.png";
 import EditUser from "./EditUser";
 import { getAllUsers } from "../../firebase/userApi";
 // import { allUsers } from "../../api/baseApi";
