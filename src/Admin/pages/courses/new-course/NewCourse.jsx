@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Nolesson from "../../../assets/Images/no-lesson-illustration.svg";
 import { useNavigate } from "react-router-dom";
 import NewLesson from "./NewLesson";
-import { addDegree } from "../../../firebase/lessonApi";
+import { addDegree } from "../../../firebase/degreeApi";
 import { toast } from "react-toastify";
 // import { addnewCourse } from "../../../api/baseApi";
 // import { convertToCourseFormData } from "../../../hooks/newCourseFunctions";
