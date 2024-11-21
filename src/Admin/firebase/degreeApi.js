@@ -10,7 +10,7 @@ export const uploadFile = async (file, type) => {
   try {
     if (type === 'video') {
       fileURL = await uploadToVimeo(file);
-    } else if (['image', 'document', 'pdf', 'ppt'].includes(type)) {
+    } else if (['image', 'document', 'pdf', 'ppt', 'audio'].includes(type)) {
       const fileRef = ref(storage, `${type}s/${uuidv4()}_${file.name}`);
       await uploadBytes(fileRef, file);
       fileURL = await getDownloadURL(fileRef);
@@ -22,6 +22,7 @@ export const uploadFile = async (file, type) => {
     throw new Error('File upload failed');
   }
 };
+
 
 // Create a test object
 const createTestObject = (testData) => {

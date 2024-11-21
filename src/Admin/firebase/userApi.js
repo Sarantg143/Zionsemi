@@ -65,6 +65,7 @@ export const addUser = async (data) => {
             educationCertURL: educationCertURL,
             username: data.username,
             password: hashedPassword,
+            purchasedDegrees: [],
             joinedDate: Date.now()
         });
 
@@ -86,6 +87,28 @@ export const getAllUsers = async () => {
         console.log(error);
     }
 };
+
+export const getUserById = async (id) => {
+    try {
+        if (!id) {
+            throw new Error('Invalid document ID');
+        }
+
+        const userDoc = doc(db, 'users', id);
+        const userSnapshot = await getDoc(userDoc);
+
+        if (userSnapshot.exists()) {
+            return { id: userSnapshot.id, ...userSnapshot.data() };
+        } else {
+            console.error('No such user exists!');
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching user by ID:', error);
+        return null;
+    }
+};
+
 
 export const editUser = async (id, data) => {
     try {
@@ -153,5 +176,35 @@ export const deleteUser = async (id) => {
         return true;
     } catch (error) {
         console.log('Error deleting user:', error);
+    }
+};
+
+export const addDegreeToUser = async (userId, degreeId) => {
+    try {
+        const userRef = doc(db, 'users', userId);
+        const userSnapshot = await getDoc(userRef);
+
+        if (!userSnapshot.exists()) {
+            console.error('No such user found!');
+            return { success: false, message: 'User not found' };
+        }
+
+        const userData = userSnapshot.data();
+        const purchasedDegrees = userData.purchasedDegrees || [];
+
+        if (purchasedDegrees.includes(degreeId)) {
+            console.log('Degree already purchased by user.');
+            return { success: false, message: 'Degree already purchased' };
+        }
+
+        await updateDoc(userRef, {
+            purchasedDegrees: [...purchasedDegrees, degreeId]
+        });
+
+        console.log('Degree successfully added to user!');
+        return { success: true, message: 'Degree added to user' };
+    } catch (error) {
+        console.error('Error adding degree to user:', error);
+        return { success: false, message: 'Error adding degree to user' };
     }
 };
