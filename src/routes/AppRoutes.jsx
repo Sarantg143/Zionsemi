@@ -18,8 +18,8 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* <Route path="/" index element={<Dashboard />} /> */}
-      <Route index element={<Register />}></Route>
-      <Route path="login" element={<Login />}></Route>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route path="home" element={<Dashboard />}>
         <Route index element={<Home />}></Route>
         <Route path="profile" element={<Profile />}></Route>
