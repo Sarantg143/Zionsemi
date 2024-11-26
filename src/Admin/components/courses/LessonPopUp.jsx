@@ -6,10 +6,10 @@ import Trash from "../../assets/Images/trash.png";
 import Edit from "../../assets/Images/edit.png";
 import LoadingGif from "../../assets/gif/loading.gif";
 import Upload from "../../assets/Images/upload.png";
-import { uploadFile } from '../../firebase/lessonApi';
+
 import LessonTest from './LessonTest';
 import { toast } from 'react-toastify';
-import { addLessonToChapter, deleteLesson, editLesson } from '../../firebase/degreeApi';
+import { addLessonToChapter, deleteLesson, editLesson,uploadFile } from '../../firebase/degreeApi';
 
 
 const initialState = {
