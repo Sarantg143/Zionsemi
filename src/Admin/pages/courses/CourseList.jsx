@@ -4,7 +4,7 @@ import "./courses.css";
 
 // import courseList from "../Assets/Data/courseList.json";
 import { useNavigate } from "react-router-dom";
-import { getDegrees } from "../../firebase/lessonApi";
+
 import { getAllDegrees } from '../../firebase/degreeApi'
 
 const CourseList = () => {
